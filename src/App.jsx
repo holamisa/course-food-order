@@ -8,8 +8,8 @@ function App() {
     <>
       <Header />
       <Meals />
-      <Cart />
-      <Checkout />
+      {/* <Cart />
+  <Checkout /> */}
     </>
   );
 }

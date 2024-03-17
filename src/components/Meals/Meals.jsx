@@ -1,8 +1,8 @@
 import Error from '../Error/Error';
 import useHttp from '../../hooks/useHttp';
 import MealItem from './MealsItem';
+import SERVER_URL from '../../constants/serverInfo';
 
-const requestUrl = 'http://localhost:3001';
 const requestConfig = {};
 
 export default function Meals() {
@@ -10,7 +10,7 @@ export default function Meals() {
     isLoading,
     error,
     data: mealsData,
-  } = useHttp(`${requestUrl}/meals`, requestConfig, []);
+  } = useHttp(`${SERVER_URL}/meals`, requestConfig, []);
 
   if (isLoading) {
     return <p className="center">Fetching meals...</p>;

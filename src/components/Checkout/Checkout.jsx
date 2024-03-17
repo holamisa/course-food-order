@@ -11,17 +11,25 @@ import useHttp from '../../hooks/useHttp';
 import SERVER_URL from '../../constants/serverInfo';
 import formatting from '../../utils/formatting';
 
-const requestConfig = {};
+const requestConfig = {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+};
 
 function Checkout() {
+  console.log('Checkout Component');
   const cartCtx = useContext(CartContext);
   const modalCtx = useContext(ModalContext);
 
   const {
-    isLoading,
+    data,
+    isLoading: isSending,
     error,
-    data: mealsData,
-  } = useHttp(`${SERVER_URL}/meals`, requestConfig, []);
+    sendRequest,
+    clearData,
+  } = useHttp(`${SERVER_URL}/orders`, requestConfig);
 
   const {
     value: nameValue,
@@ -58,19 +66,60 @@ function Checkout() {
     hasError: hasCityError,
   } = useInput('', (value) => isNotEmpty(value));
 
-  function handleClose() {
-    modalCtx.showCart();
+  function handleShowCart() {
+    modalCtx.hideCheckout();
   }
+
+  function handleFinishOrder() {
+    modalCtx.hideCheckout();
+    cartCtx.clearCart();
+    clearData();
+  }
+
+  function handleSubmit(event) {
+    event.preventDefault();
+
+    const formData = new FormData(event.target);
+    const customerData = Object.fromEntries(formData.entries());
+    sendRequest(
+      JSON.stringify({
+        order: {
+          items: cartCtx.items,
+          customer: customerData,
+        },
+      }),
+    );
+  }
+
   const cartTotalPrice = cartCtx.items.reduce(
     (totalPrice, item) => totalPrice + item.price * item.quantity,
     0,
   );
 
-  if (error) {
+  let dialogActions = (
+    <>
+      <button
+        type="button"
+        className="text-button"
+        onClick={() => handleShowCart()}
+      >
+        Close
+      </button>
+      <button type="submit" className="button">
+        Submit Order
+      </button>
+    </>
+  );
+
+  if (isSending) {
+    dialogActions = <span>Sending order data...</span>;
+  }
+
+  if (data && !error) {
     return (
       <DialogModal
         open={modalCtx.modalType === 'checkout'}
-        onClose={() => handleClose()}
+        onClose={() => handleFinishOrder()}
       >
         <h2>Success!</h2>
         <p>Your order was submitted successfully.</p>
@@ -82,7 +131,7 @@ function Checkout() {
           <button
             type="button"
             className="button"
-            onClick={() => handleClose()}
+            onClick={() => handleFinishOrder()}
           >
             Okay
           </button>
@@ -94,9 +143,9 @@ function Checkout() {
   return (
     <DialogModal
       open={modalCtx.modalType === 'checkout'}
-      onClose={() => handleClose()}
+      onClose={() => handleShowCart()}
     >
-      <form>
+      <form onSubmit={(event) => handleSubmit(event)}>
         <h2>Checkout</h2>
         <p>Total Amount: {formatting.format(cartTotalPrice)}</p>
 
@@ -104,7 +153,6 @@ function Checkout() {
           label="Full Name"
           type="text"
           id="full-name"
-          name="full-name"
           onBlur={handleNameBlur}
           onChange={handleNameChange}
           value={nameValue}
@@ -114,7 +162,6 @@ function Checkout() {
           label="E-Mail Address"
           type="email"
           id="email"
-          name="email"
           onBlur={handEmailBlur}
           onChange={handleEmailChange}
           value={emailValue}
@@ -124,7 +171,6 @@ function Checkout() {
           label="Street"
           type="text"
           id="street"
-          name="street"
           onBlur={handleStreetBlur}
           onChange={handleStreetChange}
           value={streetValue}
@@ -135,7 +181,6 @@ function Checkout() {
             label="Postal Code"
             type="text"
             id="postal-code"
-            name="postal-code"
             onBlur={handlePostalCodeBlur}
             onChange={handlePostalCodeChange}
             value={postalCodeValue}
@@ -145,7 +190,6 @@ function Checkout() {
             label="City"
             type="text"
             id="city"
-            name="city"
             onBlur={handleCityBlur}
             onChange={handleCityChange}
             value={cityValue}
@@ -155,18 +199,7 @@ function Checkout() {
 
         {error && <Error title="Failed to submit order" message={error} />}
 
-        <p className="modal-actions">
-          <button
-            type="button"
-            className="text-button"
-            onClick={() => handleClose()}
-          >
-            Close
-          </button>
-          <button type="button" className="button">
-            Submit Order
-          </button>
-        </p>
+        <p className="modal-actions">{dialogActions}</p>
       </form>
     </DialogModal>
   );

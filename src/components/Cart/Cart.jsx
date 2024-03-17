@@ -7,6 +7,7 @@ import currencyFormatter from '../../utils/formatting';
 import DialogModal from '../UI/Modal';
 
 function Cart() {
+  console.log('Cart Component');
   const cartCtx = useContext(CartContext);
   const modalCtx = useContext(ModalContext);
 

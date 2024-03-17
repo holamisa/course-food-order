@@ -18,7 +18,7 @@ app.use((req, res, next) => {
 app.get('/meals', async (req, res) => {
   const meals = await fs.readFile('./data/available-meals.json', 'utf8');
   const mealsData = JSON.parse(meals);
-  res.status(200).json({ data: mealsData });
+  res.status(200).json({ data: mealsData, message: 'Success' });
 });
 
 app.post('/orders', async (req, res) => {
@@ -33,11 +33,12 @@ app.post('/orders', async (req, res) => {
     return res.status(400).json({ message: 'Missing data.' });
   }
 
+  console.log(orderData);
   if (
     orderData.customer.email === null ||
     !orderData.customer.email.includes('@') ||
-    orderData.customer.name === null ||
-    orderData.customer.name.trim() === '' ||
+    orderData.customer['full-name'] === null ||
+    orderData.customer['full-name'].trim() === '' ||
     orderData.customer.street === null ||
     orderData.customer.street.trim() === '' ||
     orderData.customer['postal-code'] === null ||
@@ -59,7 +60,7 @@ app.post('/orders', async (req, res) => {
   const allOrders = JSON.parse(orders);
   allOrders.push(newOrder);
   await fs.writeFile('./data/orders.json', JSON.stringify(allOrders));
-  return res.status(201).json({ message: 'Order created!' });
+  return res.status(201).json({ data: newOrder, message: 'Success' });
 });
 
 app.use((req, res) => {
